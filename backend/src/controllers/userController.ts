@@ -9,13 +9,12 @@ dotenv.config();
 
 export const registerUser = asyncHandler(async(req: Request, res: Response) =>{
     const { name, email, password, pic } = req.body;
-
     const user = await User.findOne({ email });
 
     if(user){
         res.status(400).json({error: 'User already exists'});
         return;
-    }
+    };
 
     const hash = bcrypt.hashSync(password, 10);
 
@@ -46,14 +45,11 @@ export const registerUser = asyncHandler(async(req: Request, res: Response) =>{
         });
     }else{
         res.status(400).json({error: 'Error ocurred!'});
-    }
-})
+    };
+});
 
 export const login = async(req: Request, res: Response) =>{
     const { email, password } = req.body;
-
-    console.log(email, password);
-
     const user = await User.findOne({ email });
 
     if(user){
@@ -83,21 +79,8 @@ export const login = async(req: Request, res: Response) =>{
     }else{
         res.status(400).json({error: "E-mail or password incorrects"});
         return
-    }
+    };
     
-};
-
-export const teste = async(req: Request, res: Response) =>{
-    const  token: any  = req.headers['x-access-token'];
-
-    let payload;
-
-    
-    payload = await <any>jwt.verify(token, process.env.JWT_SECRET_KEY as string);
-
-    res.locals.payload = payload
-
-    res.json({payload});
 };
 
 export const logout = async(req: Request, res: Response) =>{
@@ -113,5 +96,5 @@ export const logout = async(req: Request, res: Response) =>{
         res.json({status:true, msg:'logout successful'});
     }else{
         res.status(400).json({error: "access denieded!"});
-    }
-}
+    };
+};

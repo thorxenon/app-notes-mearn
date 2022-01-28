@@ -15,9 +15,8 @@ const LoginScreen = ({ history }) => {
     const dispatch = useDispatch();
 
     const userLogin = useSelector((state)=>state.userLogin);
-    const { loading, error } = userLogin;
+    const { loading, error, userInfo } = userLogin;
     const navigate = useNavigate();
-    const userInfo = (localStorage.getItem('userInfo'));
 
     useEffect(() => {
       if(userInfo){
