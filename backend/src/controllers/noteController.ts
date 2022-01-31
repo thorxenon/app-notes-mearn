@@ -3,9 +3,13 @@ import Note from '../models/Note';
 import User from '../models/User';
 
 export const getNotes = async(req: Request, res: Response) =>{
-    const notes = await Note.find();
+    const notes = await Note.find({user:req.user._id});
 
-    res.json(notes);
+    if(notes){
+        res.json(notes);
+    }else{
+        res.status(400).json({error: 'anyone note was found!'});
+    };
 };
 
 export const createNote = async(req: Request, res: Response) =>{
@@ -75,6 +79,17 @@ export const updateNote = async(req: Request, res: Response) =>{
     }
 
     await Note.findByIdAndUpdate(req.params.id, {$set:update}, <any>{new:true});
-    
     return res.json({status: true});
+};
+
+export const deleteNote = async(req: Request, res: Response) =>{
+    if(!req.params.id) return res.status(400).json({error: "Please send the note Id correctly"});
+    const note = await Note.findById(req.params.id);
+
+    if(note && note.user.toString() == req.user._id.toString()){
+        await Note.findByIdAndDelete(req.params.id);
+        res.json({status: true});
+    }else{
+        res.status(400).json({error: "You cannot perform this action!"});
+    };
 };

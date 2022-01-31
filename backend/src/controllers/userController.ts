@@ -8,7 +8,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const registerUser = asyncHandler(async(req: Request, res: Response) =>{
-    const { name, email, password, pic } = req.body;
+    const { firstName, lastName, email, password, pic } = req.body;
     const user = await User.findOne({ email });
 
     if(user){
@@ -19,7 +19,10 @@ export const registerUser = asyncHandler(async(req: Request, res: Response) =>{
     const hash = bcrypt.hashSync(password, 10);
 
     const newUser = new User({
-        name,
+        name:{
+            firstName,
+            lastName
+        },
         email,
         password: hash,
         pic
@@ -37,7 +40,10 @@ export const registerUser = asyncHandler(async(req: Request, res: Response) =>{
 
         res.status(201).json({
             _id: newUser._id,
-            name: newUser.name.firstName,
+            name:{
+                fistName:newUser.name.firstName,
+                lastName:newUser.name.lastName
+            },
             email: newUser.email,
             isAdmin: newUser.isAdmin,
             pic: newUser.pic,
@@ -81,6 +87,78 @@ export const login = async(req: Request, res: Response) =>{
         return
     };
     
+};
+
+export const updateUserProfile = async(req: Request, res: Response) =>{
+    const  id  = req.user.id;
+
+    const { email, pic, password, newPassword } = req.body;
+    const {firstName, lastName} = req.body.name;
+
+    const user = await User.findById(id);
+    let updateUser:any = {};
+
+    if(user){
+        if(firstName){
+            let fName = {
+                firstName,
+                lastName: user.name.lastName
+            };
+            updateUser.name = fName;
+        };
+
+        if(lastName){
+            let lName = {
+                firstName: user.name.firstName,
+                lastName
+            };
+            updateUser.name = lName ;
+        };
+
+        if(firstName && lastName ){
+            let fName = {
+                firstName,
+                lastName  
+            };
+            updateUser.name = fName || req.user.name;           
+        };
+
+        if(email){
+            updateUser.email = email || req.user.email;
+        };
+
+        if(pic){
+            updateUser.pic = pic || req.user.pic
+        };
+
+        if(newPassword){
+            const hash =  bcrypt.hashSync(newPassword, 10);
+            updateUser.password = hash || user.password;
+        };       
+
+        if(bcrypt.compareSync(password, user.password)){
+            const token = jwt.sign(
+                {id: req.user._id, email: user.email},
+                process.env.JWT_SECRET_KEY as string,
+                {expiresIn:'2hr'}
+            );
+            updateUser.token = token;
+            await User.findByIdAndUpdate(
+                user._id,
+                {$set: updateUser},
+                { rawResult: true }
+            );         
+            res.status(201).json({
+                success: true,
+                token
+            });
+
+        }else{
+            res.json({error: 'password incorrect'});
+        };
+    }else{
+        res.status(404).json({error: 'User not found!'});
+    };
 };
 
 export const logout = async(req: Request, res: Response) =>{

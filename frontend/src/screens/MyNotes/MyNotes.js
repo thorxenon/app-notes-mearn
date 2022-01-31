@@ -1,21 +1,38 @@
-import React, { useState ,useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Accordion, Badge, Button, Card, useAccordionButton } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import MainScreen from '../../components/MainScreen';
-import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { listNotes, deleteNoteAction } from '../../actions/noteAction';
+import Loading from '../../components/Loading';
+import ErrorMessage from '../../components/ErrorMessage';
 
 
-const MyNotes = () => {
+const MyNotes = ({ search }) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const [ notes, setNotes ] = useState([]);
+  const noteList = useSelector(state=> state.noteList);
+  const { loading, notes, error } = noteList;
 
- 
+  const userLogin = useSelector(state => state.userLogin);
+  const { userInfo } = userLogin;
+
+  const createNote = useSelector(state => state.createNote);
+  const { success: successCreate } = createNote;
+
+  const updateNote = useSelector(state => state.updateNote);
+  const { success: successUpdate } = updateNote;
+
+  const deleteNote = useSelector(state=> state.deleteNote);
+  const { success: successDelete } = deleteNote;
 
   const deleteHandler = (id) =>{
     if(window.confirm('Are you sure?')){
-
-    }
-  }
+        dispatch(deleteNoteAction(id))
+    };
+    navigate('/mynotes');
+  };
 
   function CustomToggle({ children, eventKey }) {
     const decoratedOnClick = useAccordionButton(eventKey, () =>
@@ -35,26 +52,30 @@ const MyNotes = () => {
         {children}
       </button>
     );
-  }
-
-  const fetchNotes = async() =>{
-    const { data } = await axios.get(`/api/notes`);
-    setNotes(data);
   };
 
   useEffect(()=>{
-    fetchNotes();
-  },[])
+    //setTimeout(()=>{
+      dispatch(listNotes())
+    //},500);
+
+    if(!userInfo){
+      navigate('/');
+    };
+  },[dispatch, successCreate, userInfo, successUpdate, successDelete]);
 
   return(
-    <MainScreen title="Welcome back Peeh rangel...">
+    <MainScreen title={`Welcome back ${userInfo.name.firstName} ...`}>
       <Link to="/createnote">
         <Button style={{marginLeft:10, marginBottom:6,}} size="lg">
           Create New Note
         </Button>
       </Link>
-          {
-            notes.map((note)=>(
+          {error && <ErrorMessage varaint='danger'>{error}</ErrorMessage>}
+          {loading && <Loading/>}
+          {notes?.reverse().filter((filteredNote) =>(
+            filteredNote.title.toLowerCase().includes(search.toLowerCase())
+          )).map((note)=>(
               <Accordion eventkey="0" key={note._id}>
                 <Card style={{margin:10}}>
                 <Card.Header style={{display:"flex"}}>
@@ -88,14 +109,17 @@ const MyNotes = () => {
                         {note.content}
                       </p>
                         <footer className="blockquote-footer">
-                          Created On - date.
+                          Created On - {" "}
+                          <cite title="Source Title">
+                            {note.createdAt.substring(0, 10)}
+                          </cite>.
                         </footer>
                     </blockquote>
                   </Card.Body>
                 </Accordion.Collapse>  
                 </Card>
               </Accordion>
-            ))}
+          ))}
     </MainScreen>
   )
 };
