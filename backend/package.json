@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines":{
+    "node":"16.x"
+  },
   "scripts": {
-    "start": "nodemon -e ts,json ./src/server.ts",
+    "start":"node dist/server.js",
+    "start-dev": "nodemon -e ts,json ./src/server.ts",
     "client": "npm start --prefix ../frontend",
     "dev": "concurrently \"npm start\" \"npm run client\""
   },
