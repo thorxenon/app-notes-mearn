@@ -75,6 +75,7 @@ export const login = async(req: Request, res: Response) =>{
                 status: true,
                 token,
                 name: user.name,
+                email: user.email,
                 pic: user.pic,
                 isAdmin: user.isAdmin
             });
@@ -93,7 +94,7 @@ export const updateUserProfile = async(req: Request, res: Response) =>{
     const  id  = req.user.id;
 
     const { email, pic, password, newPassword } = req.body;
-    const {firstName, lastName} = req.body.name;
+    const {firstName, lastName} = req.body;
 
     const user = await User.findById(id);
     let updateUser:any = {};
@@ -147,9 +148,18 @@ export const updateUserProfile = async(req: Request, res: Response) =>{
                 user._id,
                 {$set: updateUser},
                 { rawResult: true }
-            );         
+            );
+            const newUser = await User.findById(user._id);
+
             res.status(201).json({
                 success: true,
+                name:{
+                    firstName: newUser.name.firstName,
+                    lastName: newUser.name.lastName,
+                },
+                email: newUser.email,
+                pic: newUser.pic,
+                isAdmin: newUser.isAdmin,
                 token
             });
 

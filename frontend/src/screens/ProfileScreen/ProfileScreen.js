@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
-import { Col, Form, Row } from 'react-bootstrap';
+import React, { useEffect, useState } from 'react';
+import { Button, Col, Form, Row } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 import MainScreen from '../../components/MainScreen';
 import './ProfileScreen.css';
+import ErrorMessage from '../../components/ErrorMessage';
+import { useNavigate } from 'react-router-dom';
+import { updateUserAction } from '../../actions/userActions';
+import Loading from '../../components/Loading';
 
 const ProfileScreen = () => {
+  const navigate = useNavigate()
 
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+
+
   const [email, setEmail] = useState('');
   const [pic, setPic] = useState();
   const [password, setPassword] = useState('');
@@ -21,19 +29,79 @@ const ProfileScreen = () => {
   const updateUser = useSelector((state) => state.updateUser);
   const { loading, error, success } = updateUser;
 
+  useEffect(() => {
+    if(!userInfo){
+      navigate('/')
+    }else{
+      setFirstName(userInfo.name.firstName);
+      setLastName(userInfo.name.lastName);
+      setEmail(userInfo.email);
+      setPic(userInfo.pic)
+    }
+  }, [userInfo]);
+
+  const postDetails = (pics) =>{
+    setPicMessage(null);
+    if(pics.type === 'image/jpeg' || pics.type === 'image/png'){
+      const data = new FormData();
+      data.append("file", pics);
+      data.append('upload_preset', "mearn-noteZipper");
+      data.append('cloud_name','drpvwzbtz');
+      fetch('http://api.cloudinary.com/v1_1/drpvwzbtz/image/upload',{
+          method:'POST',
+          body: data
+      }).then((res)=>res.json()).then((data)=>{
+        setPic(data.url.toString())
+      })
+      .catch((err) =>{
+        console.log(err);
+      }); 
+    }else{
+      return setPicMessage('Please Select an Image!');
+    };
+  };
+
+  const submitHandler = (e) =>{
+    e.preventDefault();
+    if(password === newPassword){
+      return <ErrorMessage>New Password must be difference!</ErrorMessage>
+    }else{
+      dispatch(updateUserAction({firstName, lastName, email, password, newPassword, pic}))
+    }
+  }
+  
+
   return (
       <MainScreen title="EDIT PROFILE">
           <div>
             <Row className="profileContainer">
               <Col md={6}>
-                <Form >
-                  <Form.Group controlId='name'>
-                    <Form.Label>Name</Form.Label>
+                <Form onSubmit={submitHandler}>
+                  {loading && <Loading/>}
+                  {success && (
+                    <ErrorMessage
+                      style={{backgroundColor:'green'}}
+                    >
+                      Updated Successfully
+                    </ErrorMessage>
+                  )}
+                  <Form.Group controlId='firstName'>
+                    <Form.Label>First Name</Form.Label>
                     <Form.Control
                       type='text'
-                      placeholder='Enter Name'
-                      value={name}
-                      onChange={(e)=> setName(e.target.value)}
+                      placeholder='Enter First Name'
+                      value={firstName}
+                      onChange={(e)=> setFirstName(e.target.value)}
+                    />
+                  </Form.Group>
+
+                  <Form.Group controlId='lastName'>
+                    <Form.Label>Last Name</Form.Label>
+                    <Form.Control
+                      type='text'
+                      placeholder='Enter Last Name'
+                      value={lastName}
+                      onChange={(e)=> setLastName(e.target.value)}
                     />
                   </Form.Group>
 
@@ -60,27 +128,31 @@ const ProfileScreen = () => {
                   <Form.Group controlId='newPassword'>
                     <Form.Label>New Password</Form.Label>
                     <Form.Control
-                      type='text'
+                      type='password'
                       placeholder='Enter the New Password'
                       value={newPassword}
                       onChange={(e)=> setNewPassword(e.target.value)}
                     />
                   </Form.Group>
 
-                  {/*{picMessage && (
+                  {picMessage && (
                     <ErrorMessage variante='danger'>{picMessage}</ErrorMessage>
-                  )}*/}
+                  )}
 
                   <Form.Group controlId='pic'>
                     <Form.Label>Change Profile Picture</Form.Label>
                     <Form.Control
                       type='file'
-                      id="custom-file"
                       label="Upload Profile Picture"
                       accept="image/png, image/jpeg"
-                      //onChange={(e)=> postDetails(e.target.value)}
+                      onChange={(e)=> postDetails(e.target.files[0])}
                     />
                   </Form.Group>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    style={{marginTop:15}}
+                  >Update</Button>
 
                   
                 </Form>
@@ -91,7 +163,7 @@ const ProfileScreen = () => {
                   alignItems:'center',
                   justifyContent:'center'
                 }}
-              ><img src={userInfo.pic} alt={name} className='profilePic'/></Col>
+              ><img src={userInfo.pic} alt={firstName} className='profilePic'/></Col>
             </Row>
           </div>
       </MainScreen>

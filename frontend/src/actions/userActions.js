@@ -40,7 +40,7 @@ export const register = (firstName, lastName, email, password, pic) => async(dis
             type: USER_REGISTER_FAIL,
             payload:
                 error.response && error.response.data.error
-                    ? error.response.data.message
+                    ? error.response.data.error
                     : error.message
         });
     };
@@ -71,7 +71,7 @@ export const login = (email, password) => async(dispatch) =>{
             type: USER_LOGIN_FAIL,
             payload:
                 error.response && error.response.data.error
-                    ? error.response.data.message
+                    ? error.response.data.error
                     : error.message
         })
     };
